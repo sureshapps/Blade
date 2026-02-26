@@ -5,198 +5,256 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Blade Master: Fruit Slice 3D</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, sans-serif;
-        }
-        body {
-            background: #1a1e2f;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            touch-action: none;  /* prevent pull-to-refresh while playing */
-        }
-        .game-container {
-            width: 100%;
-            max-width: 450px;     /* nice portrait card */
-            height: 100vh;
-            max-height: 800px;
-            background: linear-gradient(145deg, #2a2f4b 0%, #1a1f35 100%);
-            border-radius: 32px;
-            box-shadow: 0 30px 40px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        }
-        /* animated gradient overlay for subtle depth */
-        .game-container::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(circle at 30% 40%, rgba(255,220,150,0.15), transparent 60%);
-            pointer-events: none;
-            z-index: 5;
-        }
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            flex: 1;
-            touch-action: none;   /* important for swipe */
-            background: linear-gradient(180deg, #74b9ff 0%, #a29bfe 100%);
-            box-shadow: inset 0 -10px 30px rgba(0,0,0,0.3);
-            position: relative;
-            z-index: 10;
-            cursor: grab;
-        }
-        canvas:active {
-            cursor: grabbing;
-        }
-        /* UI overlay (lives, scores, buttons) — sits above canvas */
-        .ui-overlay {
-            position: absolute;
-            top: 10px;
-            left: 15px;
-            right: 15px;
-            z-index: 30;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            pointer-events: none;
-        }
-        .ui-left, .ui-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: rgba(10, 15, 30, 0.5);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            padding: 8px 16px;
-            border-radius: 40px;
-            border: 1px solid rgba(255,215,120,0.3);
-            box-shadow: 0 8px 12px rgba(0,0,0,0.4);
-            font-weight: 700;
-            color: white;
-            text-shadow: 0 2px 4px black;
-            pointer-events: auto;
-        }
-        .score, .high-score {
-            font-size: 1.4rem;
-            letter-spacing: 1px;
-        }
-        .high-score {
-            color: #ffd966;
-        }
-        .lives {
-            display: flex;
-            gap: 6px;
-        }
-        .heart {
-            font-size: 1.8rem;
-            line-height: 1;
-            filter: drop-shadow(0 4px 4px #c0392b);
-            color: #ff6b81;
-            transition: transform 0.2s;
-        }
-        .heart.dim {
-            opacity: 0.25;
-            filter: grayscale(0.8);
-        }
-        .icon-btn {
-            background: none;
-            border: none;
-            font-size: 2rem;
-            cursor: pointer;
-            padding: 0;
-            line-height: 1;
-            color: white;
-            filter: drop-shadow(0 4px 4px black);
-            transition: transform 0.1s;
-            pointer-events: auto;
-        }
-        .icon-btn:active {
-            transform: scale(0.9);
-        }
-        /* start & game over screens (centered) */
-        .screen {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(10, 10, 25, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-            padding: 20px;
-            transition: opacity 0.3s ease;
-            border-radius: 32px;
-        }
-        .screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        .game-title {
-            font-size: 3.2rem;
-            font-weight: 800;
-            text-align: center;
-            color: #ffe484;
-            text-shadow: 0 8px 0 #b45f2b, 0 14px 20px black;
-            letter-spacing: 2px;
-            line-height: 1.1;
-        }
-        .subtitle {
-            font-size: 1.5rem;
-            color: #fee9b0;
-            margin-bottom: 30px;
-        }
-        .btn {
-            background: linear-gradient(145deg, #f39c12, #e67e22);
-            border: none;
-            padding: 18px 50px;
-            font-size: 2rem;
-            font-weight: bold;
-            border-radius: 60px;
-            color: white;
-            text-shadow: 0 2px 0 #b45f2b;
-            box-shadow: 0 12px 0 #9c4d1a, 0 8px 20px black;
-            transition: 0.08s linear;
-            cursor: pointer;
-            margin: 10px 0;
-            border: 2px solid #ffcf8a;
-        }
-        .btn:active {
-            transform: translateY(6px);
-            box-shadow: 0 6px 0 #9c4d1a, 0 8px 20px black;
-        }
-        .highlight {
-            background: rgba(255,215,100,0.2);
-            padding: 12px 24px;
-            border-radius: 40px;
-            font-size: 1.8rem;
-            color: white;
-            border: 1px solid gold;
-        }
-        .footer-note {
-            color: rgba(255,255,240,0.7);
-            font-size: 1rem;
-            margin-top: 20px;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@400;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background: radial-gradient(circle at 20% 20%, #1f1f3a, #0b0c18 60%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+}
+
+/* ================= CONTAINER ================= */
+
+.game-container {
+    width: 100%;
+    max-width: 460px;
+    height: 100vh;
+    max-height: 820px;
+    background: linear-gradient(145deg, #14162a, #0c0f1d);
+    border-radius: 36px;
+    box-shadow:
+        0 40px 80px rgba(0,0,0,0.8),
+        inset 0 0 60px rgba(255,255,255,0.03);
+    overflow: hidden;
+    position: relative;
+}
+
+/* Premium ambient glow */
+.game-container::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, #ffcc70, #a29bfe, #00f2fe);
+    filter: blur(40px);
+    opacity: 0.08;
+    z-index: 1;
+}
+
+/* ================= CANVAS ================= */
+
+canvas {
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    background: radial-gradient(circle at 50% 30%, #2c2f5e, #0c1025 75%);
+    position: relative;
+    z-index: 2;
+}
+
+/* ================= TOP HUD ================= */
+
+.ui-overlay {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    z-index: 20;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ui-left,
+.ui-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 10px 18px;
+    border-radius: 50px;
+
+    box-shadow:
+        inset 0 0 20px rgba(255,255,255,0.04),
+        0 8px 24px rgba(0,0,0,0.6);
+}
+
+.score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 2px;
+}
+
+.high-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    color: #ffd166;
+    letter-spacing: 1px;
+}
+
+.lives {
+    display: flex;
+    gap: 6px;
+}
+
+.heart {
+    font-size: 1.6rem;
+    color: #ff4d6d;
+    filter: drop-shadow(0 0 8px #ff4d6d);
+    transition: all 0.3s ease;
+}
+
+.heart.dim {
+    opacity: 0.2;
+    filter: grayscale(1);
+}
+
+/* ================= ICON BUTTON ================= */
+
+.icon-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    font-size: 1.4rem;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+    transform: scale(1.1);
+    background: rgba(255,255,255,0.1);
+}
+
+.icon-btn:active {
+    transform: scale(0.95);
+}
+
+/* ================= SCREENS ================= */
+
+.screen {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        rgba(10,12,25,0.92),
+        rgba(0,0,0,0.96)
+    );
+    backdrop-filter: blur(25px);
+    z-index: 100;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+
+    text-align: center;
+    padding: 40px;
+    transition: 0.4s ease;
+}
+
+.screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* ================= TITLE ================= */
+
+.game-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: white;
+    text-transform: uppercase;
+    text-shadow:
+        0 0 20px rgba(255,255,255,0.3),
+        0 0 60px rgba(162,155,254,0.3);
+}
+
+.subtitle {
+    font-size: 1rem;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+}
+
+/* ================= PREMIUM BUTTON ================= */
+
+.btn {
+    background: linear-gradient(135deg, #ffd166, #ff9f1c);
+    border: none;
+    padding: 16px 48px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    border-radius: 60px;
+    color: #111;
+    cursor: pointer;
+    letter-spacing: 2px;
+
+    box-shadow:
+        0 10px 30px rgba(255,159,28,0.4),
+        inset 0 -4px 10px rgba(0,0,0,0.2);
+
+    transition: all 0.25s ease;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 20px 40px rgba(255,159,28,0.6),
+        inset 0 -4px 10px rgba(0,0,0,0.2);
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+/* ================= HIGHLIGHT CARDS ================= */
+
+.highlight {
+    background: rgba(255,255,255,0.05);
+    padding: 14px 26px;
+    border-radius: 20px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: inset 0 0 20px rgba(255,255,255,0.05);
+}
+
+.footer-note {
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.4);
+}
     </style>
 </head>
 <body>
 <div class="game-container" id="gameContainer">
     <canvas id="gameCanvas" width="450" height="700"></canvas>
 
-    <!-- UI overlay (always visible) -->
+    <!-- UI overlay -->
     <div class="ui-overlay">
         <div class="ui-left">
             <span class="score" id="scoreDisplay">0</span>
@@ -230,7 +288,7 @@
 
 <script>
 (function() {
-    // ---------- configuration ----------
+    // Canvas setup
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const scoreSpan = document.getElementById('scoreDisplay');
@@ -245,94 +303,154 @@
     const finalHighSpan = document.getElementById('finalHighScore');
     const startHighSpan = document.getElementById('startHighScore');
 
-    // resize canvas (fixed aspect)
-    function resizeCanvas() {
-        const container = canvas.parentElement;
-        const w = container.clientWidth;
-        const h = container.clientHeight;
-        canvas.width = 450;
-        canvas.height = 700;
-        // CSS handles scaling
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    // ---------- game state ----------
+    // Game state
     let fruits = [];
     let particles = [];
-    let bladePoints = [];          // swipe trail positions {x,y}
-    let bladeActive = false;
+    let bladePoints = [];
     let score = 0;
     let highScore = localStorage.getItem('bladeMasterHigh') ? parseInt(localStorage.getItem('bladeMasterHigh')) : 0;
     let lives = 3;
     let gameActive = false;
-    let gameLoopId = null;
-    let frameTime = 0;
     let lastSpawn = 0;
-    let spawnInterval = 800;       // ms, will decrease
+    let spawnInterval = 800;
     let baseSpawnInterval = 800;
-    let missedFruitsThisFrame = false;
-    let comboTimer = 0;            // frames left to count combos
     let currentCombo = 0;
+    let comboTimer = 0;
     let comboDisplay = { active: false, x: 0, y: 0, mult: 0, timer: 0 };
-
-    // sound state (HTML5 Audio)
+    let pointerDown = false;
+    let swipePoints = [];
+    let frameId = null;
     let soundEnabled = true;
-    const sounds = {
-        slice: null,
-        miss: null,
-        gameOver: null,
-        bgm: null
-    };
-    function initAudio() {
-        try {
-            sounds.slice = new Audio('data:audio/wav;base64,UklGRlwAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVoAAACAgICAf39/gICAf39/f3+AgIB/f3+AgIB/f39/f4CAgH9/f4CAgH9/f3+AgIB/f3+AgIB/f39/f4CAgH9/f4CAgH8=');
-            sounds.miss = new Audio('data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YUsAAACAgIB/f3+AgIB/f3+AgIB/f3+AgIB/f3+AgIB/f3+AgIB/f3+AgIB/f3+AgIB/f3+AgIB/f39/f4CAgH9/f4A=');
-            sounds.gameOver = new Audio('data:audio/wav;base64,UklGRmQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YUQAAACAgIB/f3+AgIB/f3+AgIB/f3+AgIB/f3+AgIB/f3+AgIB/f3+AgIB/f3+AgIB/f3+AgIB/f39/f4CAgH9/f4A=');
-            sounds.bgm = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD//5kAAAAceFpEQQAAAC4wNEhIQUgAAAUgAAAAAAAAAAB/8UUG2gAAAAAXQVNDBU0AAFs=');
-            // set bgm loop and low volume
-            if (sounds.bgm) {
-                sounds.bgm.loop = true;
-                sounds.bgm.volume = 0.4;
-            }
-            Object.values(sounds).forEach(a => { if (a) a.load(); });
-        } catch (e) { /* fallback */ }
-    }
-    initAudio();
 
-    function playSound(name) {
-        if (!soundEnabled) return;
-        const s = sounds[name];
-        if (s) {
-            s.currentTime = 0;
-            s.play().catch(() => {});  // autoplay may be blocked until user gesture
+    // Update high score display
+    highScoreSpan.textContent = highScore;
+    startHighSpan.textContent = highScore;
+
+    // Sound system (using Web Audio API for reliability)
+    let audioContext = null;
+    let soundBuffers = {};
+    let bgmSource = null;
+    let bgmGain = null;
+
+    // Initialize audio on first user interaction
+    function initAudio() {
+        if (audioContext) return;
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Create simple sounds using oscillators
+            function createSliceSound() {
+                const duration = 0.15;
+                const sampleRate = audioContext.sampleRate;
+                const buffer = audioContext.createBuffer(1, sampleRate * duration, sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < buffer.length; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                    // Envelope
+                    const env = 1 - (i / buffer.length);
+                    data[i] *= env * 0.5;
+                }
+                return buffer;
+            }
+
+            function createMissSound() {
+                const duration = 0.2;
+                const sampleRate = audioContext.sampleRate;
+                const buffer = audioContext.createBuffer(1, sampleRate * duration, sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < buffer.length; i++) {
+                    data[i] = Math.sin(i * 0.02) * 0.3 * (1 - i / buffer.length);
+                }
+                return buffer;
+            }
+
+            function createGameOverSound() {
+                const duration = 0.5;
+                const sampleRate = audioContext.sampleRate;
+                const buffer = audioContext.createBuffer(1, sampleRate * duration, sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < buffer.length; i++) {
+                    const t = i / sampleRate;
+                    data[i] = (Math.sin(t * 200) * 0.3 + Math.sin(t * 400) * 0.2) * (1 - t / duration);
+                }
+                return buffer;
+            }
+
+            function createBGMLoop() {
+                const duration = 2.0;
+                const sampleRate = audioContext.sampleRate;
+                const buffer = audioContext.createBuffer(1, sampleRate * duration, sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < buffer.length; i++) {
+                    const t = i / sampleRate;
+                    // Simple arpeggio
+                    const freq = 220 * Math.pow(2, Math.floor(t * 4 % 4) / 12);
+                    data[i] = Math.sin(t * 2 * Math.PI * freq) * 0.1;
+                }
+                return buffer;
+            }
+
+            soundBuffers.slice = createSliceSound();
+            soundBuffers.miss = createMissSound();
+            soundBuffers.gameOver = createGameOverSound();
+            soundBuffers.bgm = createBGMLoop();
+
+            // Create gain for BGM
+            bgmGain = audioContext.createGain();
+            bgmGain.gain.value = 0.3;
+            bgmGain.connect(audioContext.destination);
+        } catch (e) {
+            console.warn('Audio not supported');
         }
     }
-    function stopBgm() {
-        if (sounds.bgm) { sounds.bgm.pause(); sounds.bgm.currentTime = 0; }
-    }
-    function startBgm() {
-        if (!soundEnabled || !sounds.bgm) return;
-        sounds.bgm.play().catch(() => {});
+
+    function playSound(name) {
+        if (!soundEnabled || !audioContext || !soundBuffers[name]) return;
+        
+        try {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            if (name === 'bgm') {
+                if (bgmSource) {
+                    bgmSource.stop();
+                }
+                bgmSource = audioContext.createBufferSource();
+                bgmSource.buffer = soundBuffers.bgm;
+                bgmSource.loop = true;
+                bgmSource.connect(bgmGain);
+                bgmSource.start();
+            } else {
+                const source = audioContext.createBufferSource();
+                source.buffer = soundBuffers[name];
+                source.connect(audioContext.destination);
+                source.start();
+            }
+        } catch (e) {}
     }
 
+    function stopBgm() {
+        if (bgmSource) {
+            try {
+                bgmSource.stop();
+            } catch (e) {}
+            bgmSource = null;
+        }
+    }
+
+    // Sound toggle
     soundToggleBtn.onclick = () => {
         soundEnabled = !soundEnabled;
         soundToggleBtn.textContent = soundEnabled ? '🔊' : '🔇';
-        if (soundEnabled && gameActive) startBgm();
-        else if (!soundEnabled) stopBgm();
+        if (!soundEnabled) {
+            stopBgm();
+        } else if (gameActive) {
+            playSound('bgm');
+        }
     };
 
-    // ----- helper: update UI lives -----
-    function updateLivesUI() {
-        const hearts = livesContainer.querySelectorAll('.heart');
-        hearts.forEach((h, idx) => {
-            if (idx < lives) h.classList.remove('dim');
-            else h.classList.add('dim');
-        });
-    }
-
-    // ----- fruit definition (with 3D shadow illusion) -----
+    // Fruit types
     const fruitTypes = [
         { name: 'apple', color: '#e74c3c', shadow: '#c0392b', radius: 26, points: 10 },
         { name: 'orange', color: '#f39c12', shadow: '#e67e22', radius: 28, points: 8 },
@@ -352,8 +470,9 @@
             this.sliced = false;
             this.rotation = Math.random() * 6.28;
             this.rotSpeed = (Math.random() - 0.5) * 0.1;
-            this.halves = null; // if sliced
+            this.halves = null;
         }
+        
         update() {
             if (this.halves) {
                 this.halves[0].x += this.halves[0].vx;
@@ -366,338 +485,488 @@
             }
             this.x += this.vx;
             this.y += this.vy;
-            this.vy += 0.15;          // gravity
+            this.vy += 0.15;
             this.rotation += this.rotSpeed;
         }
+        
         draw(ctx) {
             if (this.halves) {
-                // draw two halves with juice effect
-                this.drawHalf(ctx, this.halves[0], true);
-                this.drawHalf(ctx, this.halves[1], false);
+                this.drawHalf(ctx, this.halves[0]);
+                this.drawHalf(ctx, this.halves[1]);
                 return;
             }
+            
             ctx.save();
             ctx.translate(this.x, this.y);
             ctx.rotate(this.rotation);
-            ctx.shadowColor = 'rgba(0,0,0,0.6)';
+            
+            // Shadow for 3D effect
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
             ctx.shadowBlur = 15;
             ctx.shadowOffsetY = 5;
+            
+            // Main fruit
             ctx.beginPath();
-            ctx.arc(0, 0, this.radius, 0, 2*Math.PI);
+            ctx.arc(0, 0, this.radius, 0, 2 * Math.PI);
             ctx.fillStyle = this.color;
             ctx.fill();
+            
+            // Highlight
             ctx.shadowBlur = 8;
             ctx.shadowOffsetY = 2;
-            ctx.fillStyle = this.shadow;
             ctx.beginPath();
-            ctx.arc(-3, -3, this.radius*0.3, 0, 2*Math.PI);
+            ctx.arc(-4, -4, this.radius * 0.3, 0, 2 * Math.PI);
+            ctx.fillStyle = this.shadow;
             ctx.fill();
+            
             ctx.restore();
         }
-        drawHalf(ctx, half, isLeft) {
+        
+        drawHalf(ctx, half) {
             ctx.save();
             ctx.translate(half.x, half.y);
             ctx.rotate(half.rot);
+            
             ctx.shadowColor = 'rgba(0,0,0,0.5)';
             ctx.shadowBlur = 12;
             ctx.shadowOffsetY = 4;
+            
             ctx.beginPath();
-            ctx.arc(0, 0, this.radius-2, 0, Math.PI, !isLeft); // half circle
+            ctx.arc(0, 0, this.radius - 2, 0, Math.PI);
             ctx.closePath();
             ctx.fillStyle = this.color;
             ctx.fill();
-            // juice drip
+            
             ctx.restore();
-            for (let i=0; i<3; i++) {
-                particles.push(new Particle(half.x + (Math.random()-0.5)*15, half.y + (Math.random()-0.5)*10));
+            
+            // Juice particles
+            for (let i = 0; i < 2; i++) {
+                particles.push(new Particle(
+                    half.x + (Math.random() - 0.5) * 20,
+                    half.y + (Math.random() - 0.5) * 10
+                ));
             }
         }
-        slice(swipeX, swipeY) {
+        
+        slice() {
             if (this.sliced || this.halves) return true;
             this.sliced = true;
-            // create two halves
-            let angle = Math.atan2(swipeY - this.y, swipeX - this.x);
+            
+            let angle = Math.random() * Math.PI * 2;
             let perp = angle + 1.57;
-            let force = 3;
+            
             this.halves = [
-                { x: this.x + Math.cos(perp)*8, y: this.y + Math.sin(perp)*8, vx: Math.cos(perp)*2 + this.vx*0.5, vy: -1 + this.vy*0.5, rot: this.rotation },
-                { x: this.x - Math.cos(perp)*8, y: this.y - Math.sin(perp)*8, vx: -Math.cos(perp)*2 + this.vx*0.5, vy: -1 + this.vy*0.5, rot: this.rotation+3.14 }
+                { 
+                    x: this.x + Math.cos(perp) * 8, 
+                    y: this.y + Math.sin(perp) * 8, 
+                    vx: Math.cos(perp) * 3 + this.vx * 0.3, 
+                    vy: -2 + this.vy * 0.3, 
+                    rot: this.rotation 
+                },
+                { 
+                    x: this.x - Math.cos(perp) * 8, 
+                    y: this.y - Math.sin(perp) * 8, 
+                    vx: -Math.cos(perp) * 3 + this.vx * 0.3, 
+                    vy: -2 + this.vy * 0.3, 
+                    rot: this.rotation + Math.PI 
+                }
             ];
             return true;
         }
-        isOffscreen(height) {
-            return this.y > height + 100;
+        
+        isOffscreen() {
+            return this.y > canvas.height + 100;
         }
     }
 
     class Particle {
         constructor(x, y) {
-            this.x = x; this.y = y; this.vx = (Math.random()-0.5)*2; this.vy = (Math.random()-1)*2; this.life = 20;
+            this.x = x;
+            this.y = y;
+            this.vx = (Math.random() - 0.5) * 3;
+            this.vy = (Math.random() - 1) * 2;
+            this.life = 20;
         }
-        update() { this.x += this.vx; this.y += this.vy; this.vy += 0.1; this.life -= 1; }
+        
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.vy += 0.1;
+            this.life--;
+        }
+        
         draw(ctx) {
-            ctx.fillStyle = `rgba(255,180,100,${this.life/20})`;
-            ctx.beginPath(); ctx.arc(this.x, this.y, 4, 0, 2*Math.PI); ctx.fill();
+            ctx.fillStyle = `rgba(255, 200, 100, ${this.life / 20})`;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
 
-    // spawn system
+    // Spawn fruit
     function spawnFruit() {
         if (!gameActive) return;
+        
         const type = fruitTypes[Math.floor(Math.random() * fruitTypes.length)];
         const x = 100 + Math.random() * (canvas.width - 200);
         const y = canvas.height - 20;
-        const angle = -1.2 + Math.random() * 1.4; // mostly upward
+        const angle = -1.2 + Math.random() * 1.4;
         const speed = 6 + Math.random() * 5;
-        const vx = Math.sin(angle) * speed * (Math.random()-0.5);
-        const vy = -speed * (0.8 + Math.random()*0.6);
+        const vx = Math.sin(angle) * speed * (Math.random() - 0.5) * 0.5;
+        const vy = -speed * (0.8 + Math.random() * 0.6);
+        
         fruits.push(new Fruit(x, y, vx, vy, type));
     }
 
-    // swipe handling
-    let swipePoints = []; // for collision detection (store last 5)
-    function addBladePoint(x, y) {
-        bladePoints.push({x, y, life: 8});
-        swipePoints.push({x, y});
-        if (swipePoints.length > 8) swipePoints.shift();
+    // Distance to line segment for slice detection
+    function distanceToSegment(px, py, x1, y1, x2, y2) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const len = dx * dx + dy * dy;
+        
+        if (len === 0) return Math.hypot(px - x1, py - y1);
+        
+        let t = ((px - x1) * dx + (py - y1) * dy) / len;
+        t = Math.max(0, Math.min(1, t));
+        
+        const projx = x1 + t * dx;
+        const projy = y1 + t * dy;
+        
+        return Math.hypot(px - projx, py - projy);
     }
 
+    // Check for slices
     function checkSlice() {
         if (swipePoints.length < 2) return;
-        let slicedAny = false;
-        for (let f of fruits) {
-            if (f.sliced || f.halves) continue;
-            for (let i = 0; i < swipePoints.length-1; i++) {
-                const p1 = swipePoints[i], p2 = swipePoints[i+1];
-                const dist = distanceToSegment(f.x, f.y, p1.x, p1.y, p2.x, p2.y);
-                if (dist < f.radius + 5) {
-                    if (f.slice(p2.x, p2.y)) {
-                        playSound('slice');
-                        slicedAny = true;
-                        // scoring & combo
-                        let mult = Math.min(8, 1 + (currentCombo * 0.5));
-                        let add = Math.floor(f.points * mult);
-                        score += add;
-                        if (comboTimer <= 0) currentCombo = 1;
-                        else currentCombo++;
-                        comboTimer = 30; // about 0.5 sec at 60fps
-                        comboDisplay = { active: true, x: f.x, y: f.y-30, mult: currentCombo, timer: 45 };
-                        // bonus fast reaction: if swipe fast? (simplified: just extra 5)
-                        if (Math.hypot(p2.x-p1.x, p2.y-p1.y) > 20) score += 5;
+        
+        for (let i = 0; i < fruits.length; i++) {
+            const fruit = fruits[i];
+            if (fruit.sliced || fruit.halves) continue;
+            
+            for (let j = 0; j < swipePoints.length - 1; j++) {
+                const p1 = swipePoints[j];
+                const p2 = swipePoints[j + 1];
+                const dist = distanceToSegment(fruit.x, fruit.y, p1.x, p1.y, p2.x, p2.y);
+                
+                if (dist < fruit.radius + 5) {
+                    // Slice the fruit
+                    fruit.slice();
+                    playSound('slice');
+                    
+                    // Calculate score with combo
+                    if (comboTimer <= 0) {
+                        currentCombo = 1;
+                    } else {
+                        currentCombo++;
                     }
+                    comboTimer = 30;
+                    
+                    const multiplier = Math.min(5, 1 + Math.floor(currentCombo / 2));
+                    const pointsGained = fruit.points * multiplier;
+                    score += pointsGained;
+                    
+                    // Show combo
+                    comboDisplay = {
+                        active: true,
+                        x: fruit.x,
+                        y: fruit.y - 30,
+                        mult: multiplier,
+                        timer: 45
+                    };
+                    
+                    // Update high score
+                    if (score > highScore) {
+                        highScore = score;
+                        localStorage.setItem('bladeMasterHigh', highScore);
+                        highScoreSpan.textContent = highScore;
+                    }
+                    
                     break;
                 }
             }
         }
-        if (slicedAny) {
-            // update highscore after scoring
-            if (score > highScore) { highScore = score; localStorage.setItem('bladeMasterHigh', highScore); }
-        }
     }
 
-    function distanceToSegment(px, py, x1, y1, x2, y2) {
-        const dx = x2-x1, dy = y2-y1;
-        const len = dx*dx + dy*dy;
-        if (len === 0) return Math.hypot(px-x1, py-y1);
-        let t = ((px-x1)*dx + (py-y1)*dy)/len;
-        t = Math.max(0, Math.min(1, t));
-        const projx = x1 + t*dx, projy = y1 + t*dy;
-        return Math.hypot(px-projx, py-projy);
-    }
-
-    // mouse/touch events
-    let pointerDown = false;
+    // Pointer event handlers
     function handleStart(e) {
         e.preventDefault();
         if (!gameActive) return;
+        
         pointerDown = true;
         bladePoints = [];
         swipePoints = [];
+        
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        
         const canvasX = (clientX - rect.left) * scaleX;
         const canvasY = (clientY - rect.top) * scaleY;
-        addBladePoint(canvasX, canvasY);
+        
+        if (canvasX >= 0 && canvasX <= canvas.width && canvasY >= 0 && canvasY <= canvas.height) {
+            bladePoints.push({ x: canvasX, y: canvasY, life: 8 });
+            swipePoints.push({ x: canvasX, y: canvasY });
+        }
     }
+
     function handleMove(e) {
         e.preventDefault();
         if (!pointerDown || !gameActive) return;
+        
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        const canvasX = Math.min(canvas.width, Math.max(0, (clientX - rect.left) * scaleX));
-        const canvasY = Math.min(canvas.height, Math.max(0, (clientY - rect.top) * scaleY));
-        addBladePoint(canvasX, canvasY);
-        checkSlice();
+        
+        const canvasX = (clientX - rect.left) * scaleX;
+        const canvasY = (clientY - rect.top) * scaleY;
+        
+        if (canvasX >= 0 && canvasX <= canvas.width && canvasY >= 0 && canvasY <= canvas.height) {
+            bladePoints.push({ x: canvasX, y: canvasY, life: 8 });
+            swipePoints.push({ x: canvasX, y: canvasY });
+            
+            // Keep only last 10 points for detection
+            if (swipePoints.length > 10) {
+                swipePoints.shift();
+            }
+            
+            checkSlice();
+        }
     }
+
     function handleEnd(e) {
         e.preventDefault();
         pointerDown = false;
         swipePoints = [];
-        // combo decays
     }
+
+    // Event listeners
     canvas.addEventListener('mousedown', handleStart);
     canvas.addEventListener('mousemove', handleMove);
     canvas.addEventListener('mouseup', handleEnd);
     canvas.addEventListener('mouseleave', handleEnd);
-    canvas.addEventListener('touchstart', handleStart, {passive: false});
-    canvas.addEventListener('touchmove', handleMove, {passive: false});
+    canvas.addEventListener('touchstart', handleStart, { passive: false });
+    canvas.addEventListener('touchmove', handleMove, { passive: false });
     canvas.addEventListener('touchend', handleEnd);
     canvas.addEventListener('touchcancel', handleEnd);
 
-    // game over
-    function gameOver() {
+    // Update lives UI
+    function updateLivesUI() {
+        const hearts = livesContainer.querySelectorAll('.heart');
+        hearts.forEach((heart, index) => {
+            if (index < lives) {
+                heart.classList.remove('dim');
+            } else {
+                heart.classList.add('dim');
+            }
+        });
+    }
+
+    // Game over
+    function endGame() {
         gameActive = false;
         stopBgm();
         playSound('gameOver');
+        
         finalScoreSpan.textContent = score;
         finalHighSpan.textContent = highScore;
         gameOverScreen.classList.remove('hidden');
     }
 
-    // update loop
+    // Game update loop
     function update() {
         if (!gameActive) return;
-
-        // spawn
-        if (Date.now() - lastSpawn > spawnInterval) {
+        
+        // Spawn fruits
+        const now = Date.now();
+        if (now - lastSpawn > spawnInterval) {
             spawnFruit();
-            lastSpawn = Date.now();
-            // difficulty: reduce interval gradually
-            spawnInterval = Math.max(350, baseSpawnInterval - Math.floor(score/200) * 30);
+            lastSpawn = now;
+            
+            // Increase difficulty
+            spawnInterval = Math.max(350, baseSpawnInterval - Math.floor(score / 200) * 30);
         }
-
-        // update fruits, check miss
-        for (let i = fruits.length-1; i >= 0; i--) {
-            let f = fruits[i];
-            f.update();
-            if (!f.sliced && !f.halves && f.y > canvas.height + 50) {
-                // missed fruit -> lose life
-                if (gameActive) {
-                    playSound('miss');
-                    lives--;
-                    updateLivesUI();
-                    // flash effect (UI feedback)
-                    document.body.style.backgroundColor = '#aa2b2b';
-                    setTimeout(()=> document.body.style.backgroundColor = '', 100);
-                    if (lives <= 0) {
-                        gameOver();
-                    }
+        
+        // Update fruits
+        for (let i = fruits.length - 1; i >= 0; i--) {
+            const fruit = fruits[i];
+            fruit.update();
+            
+            // Check if fruit missed
+            if (!fruit.sliced && !fruit.halves && fruit.y > canvas.height + 50) {
+                playSound('miss');
+                lives--;
+                updateLivesUI();
+                
+                // Screen flash
+                canvas.style.backgroundColor = '#ff6b6b';
+                setTimeout(() => canvas.style.backgroundColor = '', 100);
+                
+                if (lives <= 0) {
+                    endGame();
                 }
-                fruits.splice(i,1);
+                
+                fruits.splice(i, 1);
                 continue;
             }
-            if (f.halves && f.halves[0].y > canvas.height+100) {
-                fruits.splice(i,1);
+            
+            // Remove offscreen halves
+            if (fruit.halves && fruit.halves[0].y > canvas.height + 100) {
+                fruits.splice(i, 1);
             }
         }
-
-        // particles
-        particles = particles.filter(p => { p.update(); return p.life > 0; });
-
-        // combo timer
-        if (comboTimer > 0) comboTimer--;
-        else currentCombo = 0;
-
-        if (comboDisplay.active) {
+        
+        // Update particles
+        for (let i = particles.length - 1; i >= 0; i--) {
+            particles[i].update();
+            if (particles[i].life <= 0) {
+                particles.splice(i, 1);
+            }
+        }
+        
+        // Update blade trail
+        for (let i = bladePoints.length - 1; i >= 0; i--) {
+            bladePoints[i].life--;
+            if (bladePoints[i].life <= 0) {
+                bladePoints.splice(i, 1);
+            }
+        }
+        
+        // Update combo
+        if (comboTimer > 0) {
+            comboTimer--;
+        } else {
+            currentCombo = 0;
+        }
+        
+        if (comboDisplay.timer > 0) {
             comboDisplay.timer--;
-            if (comboDisplay.timer <= 0) comboDisplay.active = false;
+        } else {
+            comboDisplay.active = false;
         }
-
-        // blade trail fade
-        bladePoints = bladePoints.filter(p => { p.life--; return p.life > 0; });
-
-        // update scores UI
+        
+        // Update UI
         scoreSpan.textContent = score;
-        highScoreSpan.textContent = highScore;
-        if (score > highScore) {
-            highScore = score;
-            localStorage.setItem('bladeMasterHigh', highScore);
-        }
     }
 
+    // Draw
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        // background gradient (soft)
-        let grad = ctx.createLinearGradient(0,0,0,canvas.height);
-        grad.addColorStop(0, '#87CEEB');
-        grad.addColorStop(0.7, '#b39ddb');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0,0,canvas.width,canvas.height);
+        
+        // Sky gradient
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, '#87CEEB');
+        gradient.addColorStop(0.7, '#b39ddb');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw fruits
+        fruits.forEach(fruit => fruit.draw(ctx));
+        
+        // Draw particles
+        particles.forEach(particle => particle.draw(ctx));
+        
+        
+        // Premium glowing blade
+if (bladePoints.length > 1) {
+    ctx.beginPath();
+    ctx.moveTo(bladePoints[0].x, bladePoints[0].y);
 
-        // draw fruits
-        fruits.forEach(f => f.draw(ctx));
-        particles.forEach(p => p.draw(ctx));
+    for (let i = 1; i < bladePoints.length; i++) {
+        ctx.lineTo(bladePoints[i].x, bladePoints[i].y);
+    }
 
-        // blade trail
-        ctx.shadowBlur = 12; ctx.shadowColor = 'white';
-        ctx.lineWidth = 8; ctx.strokeStyle = '#f1c40f'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-        ctx.beginPath();
-        if (bladePoints.length > 1) {
-            ctx.moveTo(bladePoints[0].x, bladePoints[0].y);
-            for (let i=1; i<bladePoints.length; i++) {
-                ctx.lineTo(bladePoints[i].x, bladePoints[i].y);
-            }
-            ctx.stroke();
-        }
-        ctx.shadowBlur = 0;
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, "#ffd166");
+    gradient.addColorStop(1, "#a29bfe");
 
-        // combo text
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 10;
+    ctx.lineCap = "round";
+    ctx.shadowColor = "#ffd166";
+    ctx.shadowBlur = 25;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+}
+        // Draw combo text
         if (comboDisplay.active) {
             ctx.font = 'bold 36px "Segoe UI", sans-serif';
             ctx.fillStyle = 'white';
-            ctx.shadowColor = '#e67e22'; ctx.shadowBlur = 14;
-            ctx.fillText(`✧ COMBO x${comboDisplay.mult} ✧`, comboDisplay.x-60, comboDisplay.y);
+            ctx.shadowColor = '#e67e22';
+            ctx.shadowBlur = 14;
+            ctx.fillText(`✧ COMBO x${comboDisplay.mult} ✧`, comboDisplay.x - 60, comboDisplay.y);
+            ctx.shadowBlur = 0;
         }
-
-        // 3D shadow under fruits done in draw
     }
 
+    // Game loop
     function gameLoop() {
-        if (gameActive) update();
+        update();
         draw();
-        requestAnimationFrame(gameLoop);
+        frameId = requestAnimationFrame(gameLoop);
     }
-    gameLoop();
 
-    // start new game
-    function newGame() {
+    // Start new game
+    function startNewGame() {
+        // Initialize audio on first game start
+        initAudio();
+        
+        // Reset game state
         fruits = [];
         particles = [];
+        bladePoints = [];
+        swipePoints = [];
         score = 0;
         lives = 3;
         spawnInterval = 800;
         currentCombo = 0;
         comboTimer = 0;
-        gameActive = true;
-        lastSpawn = Date.now();
+        comboDisplay.active = false;
+        
+        // Update UI
+        scoreSpan.textContent = '0';
+        highScoreSpan.textContent = highScore;
         updateLivesUI();
+        
+        // Hide screens
         startScreen.classList.add('hidden');
         gameOverScreen.classList.add('hidden');
-        highScore = parseInt(localStorage.getItem('bladeMasterHigh')) || 0;
-        highScoreSpan.textContent = highScore;
-        startBgm();
+        
+        // Start game
+        gameActive = true;
+        lastSpawn = Date.now();
+        
+        // Start BGM
+        if (soundEnabled) {
+            playSound('bgm');
+        }
     }
 
-    startBtn.onclick = () => {
-        newGame();
-    };
-    restartBtn.onclick = () => {
-        newGame();
-    };
+    // Button event listeners
+    startBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        startNewGame();
+    });
 
-    // update start highscore
-    function refreshHigh() {
-        startHighSpan.textContent = localStorage.getItem('bladeMasterHigh') || 0;
-    }
-    startScreen.addEventListener('touchstart', (e) => e.preventDefault());
-    refreshHigh();
-    window.addEventListener('load', refreshHigh);
+    restartBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        startNewGame();
+    });
+
+    // Prevent clicks on screens from bubbling
+    startScreen.addEventListener('click', (e) => e.stopPropagation());
+    gameOverScreen.addEventListener('click', (e) => e.stopPropagation());
+
+    // Initialize high score display
+    startHighSpan.textContent = highScore;
+    
+    // Start game loop
+    gameLoop();
 })();
 </script>
 </body>
